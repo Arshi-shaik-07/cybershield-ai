@@ -7,10 +7,12 @@ import {
   Blocks, 
   FileText, 
   Play, 
+  Pause,
   Cpu, 
-  Activity,
-  Radio,
-  BellRing
+  Activity, 
+  Radio, 
+  BellRing,
+  Bot
 } from 'lucide-react';
 import { soundFX } from '../utils/soundEffects';
 
@@ -24,6 +26,8 @@ export default function Header({
   blockchainHeight,
   threatLevel = 'NORMAL',
   activeIncidentsCount = 0,
+  autonomousMode = true,
+  onToggleAutonomous,
 }) {
   const getDefconStyle = () => {
     switch (threatLevel) {
@@ -119,8 +123,39 @@ export default function Header({
           </div>
         </div>
 
-        {/* Center Live Threat Condition Status */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {/* Center Live Threat Condition & Autonomous Status */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          {/* Autonomous Mode Toggle Pill */}
+          {onToggleAutonomous && (
+            <button
+              onClick={onToggleAutonomous}
+              className={`cyber-badge ${autonomousMode ? 'cyber-badge-emerald' : 'cyber-badge'}`}
+              style={{
+                cursor: 'pointer',
+                padding: '6px 12px',
+                fontSize: 11,
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                border: autonomousMode ? '1px solid #a7f3d0' : '1px solid var(--border-strong)',
+                background: autonomousMode ? '#ecfdf5' : '#f1f5f9',
+                color: autonomousMode ? '#059669' : '#475569',
+              }}
+              title="Click to toggle continuous background autonomous fraud detection"
+            >
+              <Bot size={14} color={autonomousMode ? '#059669' : '#64748b'} />
+              <span>{autonomousMode ? 'AUTO-PILOT: ACTIVE' : 'AUTO-PILOT: PAUSED'}</span>
+              <span style={{
+                width: 7,
+                height: 7,
+                borderRadius: '50%',
+                background: autonomousMode ? '#059669' : '#94a3b8',
+                boxShadow: autonomousMode ? '0 0 6px #059669' : 'none',
+              }} />
+            </button>
+          )}
+
           <div className={`cyber-badge ${defcon.badge}`} style={{ padding: '6px 14px', fontSize: 12 }}>
             <Activity size={14} />
             <span>{defcon.text}</span>
@@ -134,23 +169,12 @@ export default function Header({
 
         {/* Action Controls & Triggers */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {/* Quick Attack Simulator Trigger */}
-          <button
-            onClick={() => onLaunchScenario('scenario-phish-lateral')}
-            disabled={activeScenario !== null}
-            className="cyber-btn cyber-btn-primary cyber-btn-sm"
-            title="Simulate Spear-Phishing & Lateral Pivot Kill-Chain"
-          >
-            <Play size={13} />
-            <span>Simulate Attack</span>
-          </button>
-
           {/* Test Alert Sound Button */}
           <button
             onClick={handleTestSound}
             className="cyber-btn cyber-btn-sm"
             style={{ borderColor: '#fca5a5', color: '#dc2626' }}
-            title="Test the new solid klaxon intrusion alarm"
+            title="Test the solid intrusion alarm sound"
           >
             <BellRing size={13} />
             <span>Test Sound</span>

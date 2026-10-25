@@ -28,12 +28,76 @@ import {
   ShieldCheck, 
   Sparkles,
   Layers,
-  Radio
+  Radio,
+  Bot
 } from 'lucide-react';
+
+const AUTONOMOUS_THREAT_POOL = [
+  {
+    sourceNode: 'node-edge',
+    targetNode: 'node-bastion',
+    attackerIp: '185.220.101.5',
+    tactic: 'Initial Access',
+    technique: 'T1190 (Exploit Public-Facing Application)',
+    title: 'Autonomous Detection: External SSH Port 2222 Honeypot Probe',
+    summary: 'Adversary bot 185.220.101.5 probed honeypot SSH daemon on 10.0.4.99. Session transparently trapped in isolated sandbox and logged to blockchain.',
+    severity: 'High',
+  },
+  {
+    sourceNode: 'node-workstation',
+    targetNode: 'node-ad',
+    attackerIp: '194.26.29.112',
+    tactic: 'Credential Access',
+    technique: 'T1558.003 (Kerberoasting / AS-REP Roasting)',
+    title: 'Autonomous Detection: Decoy Domain Admin Account Queried',
+    summary: 'Unauthorized Kerberos ticket request detected targeting fake admin service account. Zero legitimate usage exists; guaranteed intruder presence.',
+    severity: 'Critical',
+  },
+  {
+    sourceNode: 'node-cloud',
+    targetNode: 'node-cloud',
+    attackerIp: '45.154.255.89',
+    tactic: 'Exfiltration',
+    technique: 'T1530 (Cloud Storage Object Exfiltration)',
+    title: 'Autonomous Detection: Decoy S3 Data Lake Enumerated',
+    summary: 'Automated crawler invoked ListObjects on decoy bucket s3://corp-backups-q4. Cloud canary guard revoked IAM permissions within 110ms.',
+    severity: 'Critical',
+  },
+  {
+    sourceNode: 'node-workstation',
+    targetNode: 'node-workstation',
+    attackerIp: '10.0.1.42',
+    tactic: 'Discovery',
+    technique: 'T1083 (File and Directory Discovery)',
+    title: 'Autonomous Detection: Decoy Honeyfile Beacon Fired',
+    summary: 'Suspicious background process opened confidential canary document. Embedded DNS webhook signaled immediate intrusion alert to SOC.',
+    severity: 'High',
+  },
+  {
+    sourceNode: 'node-ad',
+    targetNode: 'node-db',
+    attackerIp: '194.26.29.112',
+    tactic: 'Lateral Movement',
+    technique: 'T1021.002 (SMB/Windows Admin Shares)',
+    title: 'Autonomous Detection: Lateral Pivot Intercepted',
+    summary: 'Intruder attempted lateral jump toward Core Financial Database using harvested decoy key. Autonomous sandbox rerouted connection.',
+    severity: 'Critical',
+  },
+  {
+    sourceNode: 'node-edge',
+    targetNode: 'node-cloud',
+    attackerIp: '91.240.118.22',
+    tactic: 'Credential Access',
+    technique: 'T1552.001 (Credentials in Files)',
+    title: 'Autonomous Detection: Poisoned API Token Used',
+    summary: 'Canary Stripe API secret key used in unauthorized API Gateway request from external proxy. Request sinkholed and sealed on blockchain.',
+    severity: 'High',
+  },
+];
 
 export default function App() {
   // Navigation Tabs: 'TOPOLOGY', 'DECOYS', 'SIMULATOR', 'TERMINAL', 'TIMELINE', 'BLOCKCHAIN'
-  const [activeTab, setActiveTab] = useState('DECOYS');
+  const [activeTab, setActiveTab] = useState('SIMULATOR');
 
   // Network & Decoy State with dynamic persistence (0 demo records - only owner/user inserted records)
   const [nodes, setNodes] = useState(INITIAL_NODES);
@@ -43,7 +107,6 @@ export default function App() {
       const saved = localStorage.getItem('cybershield_owner_records_v3');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Ensure no old demo records exist
         return parsed.filter(d => !d.id?.startsWith('decoy-file-') && !d.id?.startsWith('decoy-cred-') && !d.id?.startsWith('decoy-endp-'));
       }
       return [];
@@ -61,6 +124,16 @@ export default function App() {
   const [isRunning, setIsRunning] = useState(false);
   const [activeAttackPath, setActiveAttackPath] = useState([]);
   const timerRef = useRef(null);
+
+  // Autonomous Threat Detection Engine State (AUTOMATIC FRAUD IDENTIFICATION)
+  const [autonomousMode, setAutonomousMode] = useState(true);
+  const [detectionSpeed, setDetectionSpeed] = useState(8000);
+  const [autoDetectedCount, setAutoDetectedCount] = useState(0);
+  const [lastAutoDetection, setLastAutoDetection] = useState(null);
+  const [recentAutoIntrusions, setRecentAutoIntrusions] = useState([]);
+  const [autoCycleScenarios, setAutoCycleScenarios] = useState(false);
+  const autoCycleScenariosRef = useRef(false);
+  const autoThreatIndexRef = useRef(0);
 
   // Forensics & Blockchain State
   const [incidents, setIncidents] = useState([]);
@@ -108,8 +181,13 @@ export default function App() {
     title,
     summary,
     severity = 'High',
+    isAutonomous = false,
   }) => {
-    soundFX.playAlarmAlert();
+    if (isAutonomous) {
+      soundFX.playRadarPing();
+    } else {
+      soundFX.playAlarmAlert();
+    }
 
     let triggeredDecoyName = 'Decoy Asset';
     setDecoys(prev =>
@@ -143,10 +221,7 @@ export default function App() {
     else if (threatLevel !== 'CRITICAL') setThreatLevel('HIGH');
 
     if (sourceNodeId && targetNodeId) {
-      setActiveAttackPath(prev => {
-        const set = new Set([...prev, sourceNodeId, targetNodeId]);
-        return Array.from(set);
-      });
+      setActiveAttackPath([sourceNodeId, targetNodeId]);
     }
 
     const timestamp = new Date().toISOString();
@@ -205,7 +280,59 @@ export default function App() {
     setTimeout(() => soundFX.playBlockMinted(), 200);
   };
 
-  // Automated Scenario Runner
+  // AUTONOMOUS CONTINUOUS FRAUD & INTRUSION DETECTION ENGINE (AUTO-PILOT)
+  useEffect(() => {
+    if (!autonomousMode || isRunning) return;
+
+    const interval = setInterval(() => {
+      const idx = autoThreatIndexRef.current % AUTONOMOUS_THREAT_POOL.length;
+      autoThreatIndexRef.current += 1;
+      const baseThreat = AUTONOMOUS_THREAT_POOL[idx];
+
+      let targetDecoyId = null;
+      let targetTitle = baseThreat.title;
+      let targetSummary = baseThreat.summary;
+
+      // If owner has inserted custom decoys, prioritize hunting against owner assets!
+      if (decoys.length > 0) {
+        const ownerDecoy = decoys[Math.floor(Math.random() * decoys.length)];
+        targetDecoyId = ownerDecoy.id;
+        targetTitle = `Autonomous Detection: Decoy "${ownerDecoy.name}" Tripped`;
+        targetSummary = `Autonomous sensor detected unauthorized access by ${baseThreat.attackerIp} touching owner-inserted asset "${ownerDecoy.name}" (${ownerDecoy.category}) on ${ownerDecoy.nodeId}. Zero false-positives confirmed.`;
+      }
+
+      triggerDecoyTripwire({
+        decoyId: targetDecoyId,
+        sourceNodeId: baseThreat.sourceNode,
+        targetNodeId: baseThreat.targetNode,
+        attackerIp: baseThreat.attackerIp,
+        tactic: baseThreat.tactic,
+        technique: baseThreat.technique,
+        title: targetTitle,
+        summary: targetSummary,
+        severity: baseThreat.severity,
+        isAutonomous: true,
+      });
+
+      setAutoDetectedCount(c => c + 1);
+
+      const detectionEvent = {
+        id: `auto-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        attackerIp: baseThreat.attackerIp,
+        tactic: baseThreat.tactic,
+        title: targetTitle,
+        blockNumber: blocks.length,
+      };
+
+      setLastAutoDetection(detectionEvent);
+      setRecentAutoIntrusions(prev => [detectionEvent, ...prev.slice(0, 4)]);
+    }, detectionSpeed);
+
+    return () => clearInterval(interval);
+  }, [autonomousMode, isRunning, detectionSpeed, decoys]);
+
+  // Automated Scenario Runner (for on-demand APT testing)
   const handleLaunchScenario = (scenarioId) => {
     const scenario = ATTACK_SCENARIOS.find(s => s.id === scenarioId);
     if (!scenario) return;
@@ -230,7 +357,6 @@ export default function App() {
     const step = scenario.steps[stepIndex];
     setActiveStepIndex(step.stepIndex);
 
-    // Find any decoy on target node if available
     const nodeDecoy = decoys.find(d => d.nodeId === step.targetNode) || decoys[0];
 
     triggerDecoyTripwire({
@@ -248,10 +374,27 @@ export default function App() {
     if (stepIndex + 1 < scenario.steps.length) {
       timerRef.current = setTimeout(() => {
         executeScenarioStep(scenario, stepIndex + 1);
-      }, step.delayMs || 2000);
+      }, step.delayMs || 2200);
     } else {
       setIsRunning(false);
       soundFX.playContainmentSuccess();
+      if (autoCycleScenariosRef.current) {
+        timerRef.current = setTimeout(() => {
+          if (!autoCycleScenariosRef.current) return;
+          const currentIdx = ATTACK_SCENARIOS.findIndex(s => s.id === scenario.id);
+          const nextIdx = (currentIdx + 1) % ATTACK_SCENARIOS.length;
+          handleLaunchScenario(ATTACK_SCENARIOS[nextIdx].id);
+        }, 3500);
+      }
+    }
+  };
+
+  const handleToggleAutoCycle = () => {
+    const next = !autoCycleScenarios;
+    setAutoCycleScenarios(next);
+    autoCycleScenariosRef.current = next;
+    if (next && !isRunning) {
+      handleLaunchScenario(ATTACK_SCENARIOS[0].id);
     }
   };
 
@@ -274,6 +417,8 @@ export default function App() {
     setActiveStepIndex(0);
     setIsRunning(false);
     setActiveAttackPath([]);
+    setAutoCycleScenarios(false);
+    autoCycleScenariosRef.current = false;
   };
 
   // Full System Reset
@@ -289,6 +434,8 @@ export default function App() {
     setNodes(INITIAL_NODES);
     setIncidents([]);
     setBlocks([getGenesisBlock()]);
+    setAutoDetectedCount(0);
+    setRecentAutoIntrusions([]);
     soundFX.playRadarPing();
   };
 
@@ -530,6 +677,8 @@ export default function App() {
         blockchainHeight={blocks.length - 1}
         threatLevel={threatLevel}
         activeIncidentsCount={incidents.length}
+        autonomousMode={autonomousMode}
+        onToggleAutonomous={() => setAutonomousMode(m => !m)}
       />
 
       {/* Main Workspace Layout */}
@@ -557,9 +706,11 @@ export default function App() {
             onClick={() => setActiveTab('SIMULATOR')}
             className={`nav-tab-item ${activeTab === 'SIMULATOR' ? 'active' : ''}`}
           >
-            <Play size={16} />
-            <span>Kill-Chain Simulator</span>
-            {activeScenarioId && <span className="tab-badge" style={{ color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca' }}>ACTIVE</span>}
+            <Bot size={16} color={autonomousMode ? '#059669' : '#64748b'} />
+            <span>Kill-Chain & Auto-Detection</span>
+            <span className="tab-badge" style={{ color: autonomousMode ? '#059669' : '#64748b', background: autonomousMode ? '#ecfdf5' : '#f1f5f9' }}>
+              {autonomousMode ? 'AUTO-ACTIVE' : 'PAUSED'}
+            </span>
           </button>
 
           <button
@@ -633,6 +784,15 @@ export default function App() {
             onPauseScenario={handlePauseScenario}
             onResumeScenario={handleResumeScenario}
             onResetScenario={handleResetScenario}
+            autonomousMode={autonomousMode}
+            onToggleAutonomous={() => setAutonomousMode(m => !m)}
+            detectionSpeed={detectionSpeed}
+            onChangeSpeed={(spd) => setDetectionSpeed(spd)}
+            autoDetectedCount={autoDetectedCount}
+            lastAutoDetection={lastAutoDetection}
+            recentAutoIntrusions={recentAutoIntrusions}
+            autoCycleScenarios={autoCycleScenarios}
+            onToggleAutoCycle={handleToggleAutoCycle}
           />
         )}
 
