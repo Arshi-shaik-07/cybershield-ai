@@ -12,7 +12,6 @@ import IncidentReportModal from './components/IncidentReportModal';
 import { 
   INITIAL_NODES, 
   INITIAL_EDGES, 
-  INITIAL_DECOYS, 
   ATTACK_SCENARIOS, 
   getGenesisBlock 
 } from './utils/initialData';
@@ -34,19 +33,25 @@ import {
 
 export default function App() {
   // Navigation Tabs: 'TOPOLOGY', 'DECOYS', 'SIMULATOR', 'TERMINAL', 'TIMELINE', 'BLOCKCHAIN'
-  const [activeTab, setActiveTab] = useState('TOPOLOGY');
+  const [activeTab, setActiveTab] = useState('DECOYS');
 
-  // Network & Decoy State with dynamic persistence
+  // Network & Decoy State with dynamic persistence (0 demo records - only owner/user inserted records)
   const [nodes, setNodes] = useState(INITIAL_NODES);
   const [edges, setEdges] = useState(INITIAL_EDGES);
   const [decoys, setDecoys] = useState(() => {
     try {
-      const saved = localStorage.getItem('cybershield_decoys');
-      return saved ? JSON.parse(saved) : INITIAL_DECOYS;
+      const saved = localStorage.getItem('cybershield_owner_records_v3');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Ensure no old demo records exist
+        return parsed.filter(d => !d.id?.startsWith('decoy-file-') && !d.id?.startsWith('decoy-cred-') && !d.id?.startsWith('decoy-endp-'));
+      }
+      return [];
     } catch (e) {
-      return INITIAL_DECOYS;
+      return [];
     }
   });
+
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [inspectedDecoy, setInspectedDecoy] = useState(null);
 
@@ -65,10 +70,16 @@ export default function App() {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
-  // Persist decoys changes to localStorage
+  // Derive dynamic decoy counts per node
+  const nodesWithDynamicCounts = nodes.map(n => ({
+    ...n,
+    decoysCount: decoys.filter(d => d.nodeId === n.id).length,
+  }));
+
+  // Persist owner-inserted decoys changes to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('cybershield_decoys', JSON.stringify(decoys));
+      localStorage.setItem('cybershield_owner_records_v3', JSON.stringify(decoys));
     } catch (e) {}
   }, [decoys]);
 
@@ -98,11 +109,9 @@ export default function App() {
     summary,
     severity = 'High',
   }) => {
-    // 1. Play solid intrusion alert sound
     soundFX.playAlarmAlert();
 
-    // 2. Update decoy trigger count dynamically
-    let triggeredDecoyName = 'Decoy Gateway';
+    let triggeredDecoyName = 'Decoy Asset';
     setDecoys(prev =>
       prev.map(d => {
         if (d.id === decoyId) {
@@ -117,7 +126,6 @@ export default function App() {
       })
     );
 
-    // 3. Update node statuses
     setNodes(prev =>
       prev.map(n => {
         if (n.id === targetNodeId) {
@@ -131,11 +139,9 @@ export default function App() {
       })
     );
 
-    // 4. Update threat level
     if (severity === 'Critical') setThreatLevel('CRITICAL');
     else if (threatLevel !== 'CRITICAL') setThreatLevel('HIGH');
 
-    // 5. Update active attack path
     if (sourceNodeId && targetNodeId) {
       setActiveAttackPath(prev => {
         const set = new Set([...prev, sourceNodeId, targetNodeId]);
@@ -143,7 +149,6 @@ export default function App() {
       });
     }
 
-    // 6. Generate dynamic cryptographic evidence hash
     const timestamp = new Date().toISOString();
     const incidentId = `INC-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
     const evidencePayload = {
@@ -178,7 +183,6 @@ export default function App() {
 
     setIncidents(prev => [newIncident, ...prev]);
 
-    // 7. Mine a new block onto DecoyGrid blockchain safely using functional updater
     setBlocks(prevBlocks => {
       const prevHash = prevBlocks[prevBlocks.length - 1]?.blockHash || '0x0000000000000000000000000000000000000000000000000000000000000000';
       const newBlock = createBlock({
@@ -226,8 +230,11 @@ export default function App() {
     const step = scenario.steps[stepIndex];
     setActiveStepIndex(step.stepIndex);
 
+    // Find any decoy on target node if available
+    const nodeDecoy = decoys.find(d => d.nodeId === step.targetNode) || decoys[0];
+
     triggerDecoyTripwire({
-      decoyId: step.decoyId,
+      decoyId: nodeDecoy ? nodeDecoy.id : null,
       sourceNodeId: step.sourceNode,
       targetNodeId: step.targetNode,
       attackerIp: step.attackerIp,
@@ -280,10 +287,6 @@ export default function App() {
     setInspectedDecoy(null);
     setThreatLevel('NORMAL');
     setNodes(INITIAL_NODES);
-    setDecoys(INITIAL_DECOYS);
-    try {
-      localStorage.removeItem('cybershield_decoys');
-    } catch (e) {}
     setIncidents([]);
     setBlocks([getGenesisBlock()]);
     soundFX.playRadarPing();
@@ -295,35 +298,40 @@ export default function App() {
       case 'scan': {
         const targetIp = arg || '198.51.100.2';
         const targetNode = nodes.find(n => n.ip === targetIp || n.id.includes(targetIp)) || nodes[0];
+        const activeNodeDecoys = decoys.filter(d => d.nodeId === targetNode.id);
 
         triggerDecoyTripwire({
-          decoyId: null,
+          decoyId: activeNodeDecoys[0]?.id || null,
           sourceNodeId: 'node-edge',
           targetNodeId: targetNode.id,
           attackerIp: '194.26.29.112',
           tactic: 'Reconnaissance',
           technique: 'T1595 (Active Scanning)',
           title: `Port Scan Detected on ${targetNode.name}`,
-          summary: `Port probe from 194.26.29.112 scanning ${targetNode.ip}. Identified open ports: ${targetNode.services.join(', ')}.`,
+          summary: `Port probe from 194.26.29.112 scanning ${targetNode.ip}. Identified open services: ${targetNode.services.join(', ')}.`,
           severity: 'Medium',
         });
 
         return [
           `Starting Nmap scan on ${targetNode.ip}...`,
           `Host is up (0.0024s latency).`,
-          `PORT     STATE SERVICE`,
-          `22/tcp   open  ssh`,
-          `80/tcp   open  http`,
-          `2222/tcp open  honey-ssh [CYBERSHIELD CANARY]`,
-          `Nmap done: 1 IP address scanned in 1.42 seconds.`,
-          `[!] ALERT: Decoy sensor triggered on ${targetNode.name}. Evidence block mined.`,
+          `SERVICES RUNNING: ${targetNode.services.join(', ')}`,
+          `DECOYS ARMED ON THIS NODE: ${activeNodeDecoys.length > 0 ? activeNodeDecoys.map(d => d.name).join(', ') : 'None inserted yet'}`,
+          `[!] ALERT: Decoy sensor triggered on ${targetNode.name}. Evidence block mined to blockchain.`,
         ];
       }
 
       case 'cat':
       case 'read': {
-        const targetFile = arg || 'prod-payment-gateway.env';
-        const decoy = decoys.find(d => d.name.toLowerCase().includes(targetFile.toLowerCase())) || decoys[1];
+        const searchName = arg ? arg.toLowerCase() : '';
+        const decoy = decoys.find(d => d.name.toLowerCase().includes(searchName)) || decoys.find(d => d.category === 'Honeyfile');
+
+        if (!decoy) {
+          return [
+            `Error: No decoy honeyfile found matching "${arg || 'file'}".`,
+            `Please go to "Decoy Asset Studio" and insert a honeyfile first.`,
+          ];
+        }
 
         triggerDecoyTripwire({
           decoyId: decoy.id,
@@ -338,7 +346,7 @@ export default function App() {
         });
 
         return [
-          `=== DISPLAYING CONTENTS OF ${decoy.name} ===`,
+          `=== DISPLAYING CONTENTS OF ${decoy.name} (Inserted by: ${decoy.insertedBy || 'Owner'}) ===`,
           decoy.previewContent || 'DATABASE_URL=postgres://root:honey99@10.0.3.12:5432/corp',
           `[!] CRITICAL: Canary token [${decoy.canaryToken}] pinged SOC command center.`,
         ];
@@ -346,57 +354,71 @@ export default function App() {
 
       case 'download':
       case 'get': {
-        const targetDoc = arg || 'Q4_Executive_Payroll_Bonus.xlsx';
-        const decoy = decoys.find(d => d.name.toLowerCase().includes(targetDoc.toLowerCase())) || decoys[0];
+        const decoy = decoys.find(d => d.category === 'Honeyfile') || decoys[0];
+
+        if (!decoy) {
+          return [
+            `Error: No downloadable decoy file exists.`,
+            `Please insert a decoy honeyfile in "Decoy Asset Studio" first.`,
+          ];
+        }
 
         triggerDecoyTripwire({
           decoyId: decoy.id,
-          sourceNodeId: 'node-workstation',
-          targetNodeId: 'node-workstation',
+          sourceNodeId: decoy.nodeId,
+          targetNodeId: decoy.nodeId,
           attackerIp: '194.26.29.112',
           tactic: 'Exfiltration',
           technique: 'T1083 (File Discovery & Canary Beacon)',
-          title: `Canary Honeyfile Exfiltrated: ${decoy.name}`,
-          summary: `Attacker downloaded "${decoy.name}". Embedded macro DNS webhook triggered immediate incident report.`,
+          title: `Owner Decoy Exfiltrated: ${decoy.name}`,
+          summary: `Attacker downloaded "${decoy.name}" (Inserted by: ${decoy.insertedBy || 'Owner'}). Canary webhook triggered instant alert.`,
           severity: 'Critical',
         });
 
         return [
-          `Connecting to file host... 200 OK`,
-          `Downloading ${decoy.name} [1.4 MB]... 100%`,
-          `[!] CANARY BEACON FIRED: http://canary.cyberdeception.net/p8812 accessed!`,
-          `[!] SOC Defense response: Workstation #42 placed in micro-segmentation queue.`,
+          `Connecting to node... 200 OK`,
+          `Downloading ${decoy.name} [${decoy.fileSize || '1.5 MB'}]... 100%`,
+          `[!] CANARY BEACON FIRED: Webhook alert logged to SIEM!`,
+          `[!] Blockchain block sealed with cryptographic proof.`,
         ];
       }
 
       case 'use-cred':
       case 'auth': {
-        const credUser = arg || 'DOMAIN\\svc_backup_admin';
-        const decoy = decoys.find(d => d.name.includes('svc_backup_admin')) || decoys[4];
+        const decoy = decoys.find(d => d.category === 'Honeytoken') || decoys[0];
+
+        if (!decoy) {
+          return [
+            `Error: No fake credentials currently deployed.`,
+            `Please insert a fake credential (honeytoken) in "Decoy Asset Studio" first.`,
+          ];
+        }
 
         triggerDecoyTripwire({
           decoyId: decoy.id,
           sourceNodeId: 'node-workstation',
-          targetNodeId: 'node-ad',
+          targetNodeId: decoy.nodeId || 'node-ad',
           attackerIp: '194.26.29.112',
           tactic: 'Credential Access',
           technique: 'T1558 (Kerberoasting / AS-REP Roasting)',
-          title: `Decoy Honeytoken Authenticated: ${credUser}`,
-          summary: `Kerberos ticket requested for fake account "${credUser}". Account has zero legitimate use; guaranteed intruder presence.`,
+          title: `Owner Honeytoken Authenticated: ${decoy.name}`,
+          summary: `Authentication attempted using owner-inserted decoy "${decoy.name}". Instant 100% fidelity alert triggered.`,
           severity: 'Critical',
         });
 
         return [
-          `Submitting Kerberos TGS request for ${credUser}...`,
-          `Kerberos Auth Response: SUCCESS (Ticket Granted: 0x77A1)`,
-          `[!] TRIPWIRE FIRED: Fake service account accessed!`,
-          `[!] Intruder IP 194.26.29.112 flagged with 100% certainty.`,
+          `Submitting authentication request for ${decoy.name}...`,
+          `Auth Response: SUCCESS (Fake Token Granted: 0x77A1)`,
+          `[!] TRIPWIRE FIRED: Owner-inserted decoy credential accessed!`,
+          `[!] Intruder IP 194.26.29.112 flagged and recorded on-chain.`,
         ];
       }
 
       case 'ssh': {
+        const decoy = decoys.find(d => d.category === 'Endpoint') || decoys[0];
+
         triggerDecoyTripwire({
-          decoyId: 'decoy-endp-01',
+          decoyId: decoy ? decoy.id : null,
           sourceNodeId: 'node-ad',
           targetNodeId: 'node-bastion',
           attackerIp: '194.26.29.112',
@@ -411,14 +433,14 @@ export default function App() {
           `OpenSSH_8.9p1 Ubuntu-3ubuntu0.1`,
           `Password: ********`,
           `Welcome to Bastion Jump Server (10.0.4.99)`,
-          `Last login: Sun Oct 25 11:42:19 2026 from 194.26.29.112`,
+          `Last login: ${new Date().toLocaleTimeString()} from 194.26.29.112`,
           `[!] ALERT: Connection trapped inside CyberShield Honeynet Sandbox! All keystrokes recorded.`,
         ];
       }
 
       case 'exfil': {
         triggerDecoyTripwire({
-          decoyId: 'decoy-endp-02',
+          decoyId: null,
           sourceNodeId: 'node-cloud',
           targetNodeId: 'node-cloud',
           attackerIp: '45.154.255.89',
@@ -444,35 +466,21 @@ export default function App() {
     }
   };
 
-  // Deploy New Dynamic Decoy Asset
+  // Deploy New Dynamic Decoy Asset (Inserted by Owner or User)
   const handleDeployDecoy = (newDecoy) => {
     setDecoys(prev => [newDecoy, ...prev]);
     soundFX.playBlockMinted();
-
-    // Update node decoy count dynamically
-    setNodes(prev =>
-      prev.map(n => {
-        if (n.id === newDecoy.nodeId) {
-          return { ...n, decoysCount: (n.decoysCount || 0) + 1 };
-        }
-        return n;
-      })
-    );
   };
 
   const handleDeleteDecoy = (decoyId) => {
-    const decoy = decoys.find(d => d.id === decoyId);
-    if (decoy) {
-      setNodes(prev =>
-        prev.map(n => {
-          if (n.id === decoy.nodeId) {
-            return { ...n, decoysCount: Math.max(0, (n.decoysCount || 1) - 1) };
-          }
-          return n;
-        })
-      );
-    }
     setDecoys(prev => prev.filter(d => d.id !== decoyId));
+  };
+
+  const handleClearAllDecoys = () => {
+    setDecoys([]);
+    try {
+      localStorage.removeItem('cybershield_owner_records_v3');
+    } catch (e) {}
   };
 
   // Tamper & Anti-Forensics Simulation
@@ -584,7 +592,7 @@ export default function App() {
         {/* Tab Content Display */}
         {activeTab === 'TOPOLOGY' && (
           <NetworkTopology
-            nodes={nodes}
+            nodes={nodesWithDynamicCounts}
             edges={edges}
             activeAttackPath={activeAttackPath}
             selectedNodeId={selectedNodeId}
@@ -597,9 +605,10 @@ export default function App() {
         {activeTab === 'DECOYS' && (
           <DecoyManager
             decoys={decoys}
-            nodes={nodes}
+            nodes={nodesWithDynamicCounts}
             onDeployDecoy={handleDeployDecoy}
             onDeleteDecoy={handleDeleteDecoy}
+            onClearAllDecoys={handleClearAllDecoys}
             onViewDecoy={setInspectedDecoy}
             onTestTripwire={(decoy) => {
               triggerDecoyTripwire({
@@ -607,7 +616,7 @@ export default function App() {
                 sourceNodeId: decoy.nodeId,
                 targetNodeId: decoy.nodeId,
                 title: `Manual Tripwire Test: ${decoy.name}`,
-                summary: `Operator triggered tripwire simulation on ${decoy.name} (${decoy.tripwireType}).`,
+                summary: `Operator triggered tripwire simulation on ${decoy.name} (${decoy.tripwireType}) [Inserted by: ${decoy.insertedBy || 'Owner'}].`,
                 severity: 'High',
               });
             }}

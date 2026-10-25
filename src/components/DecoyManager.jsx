@@ -9,19 +9,22 @@ import {
   Eye, 
   Flame, 
   ShieldCheck, 
-  Sparkles,
-  Layers,
-  Radio,
-  FileSpreadsheet,
-  Lock,
-  Trash2
+  Sparkles, 
+  Layers, 
+  FileSpreadsheet, 
+  Trash2,
+  UserCheck,
+  Zap,
+  RotateCcw
 } from 'lucide-react';
+import { DECOY_PRESETS } from '../utils/initialData';
 
 export default function DecoyManager({
-  decoys,
-  nodes,
+  decoys = [],
+  nodes = [],
   onDeployDecoy,
   onDeleteDecoy,
+  onClearAllDecoys,
   onViewDecoy,
   onTestTripwire,
 }) {
@@ -29,14 +32,16 @@ export default function DecoyManager({
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Form state for creating a new dynamic decoy
+  // Form state for creating a new custom decoy inserted by the owner or user
   const [formData, setFormData] = useState({
     name: '',
+    insertedBy: 'Owner (You)',
     category: 'Honeyfile',
     nodeId: 'node-workstation',
     type: 'Canary Document',
     tripwireType: 'Embedded DNS Webhook Beacon',
     realismScore: 98,
+    fileSize: '1.8 MB',
     description: '',
     previewContent: '',
   });
@@ -48,10 +53,12 @@ export default function DecoyManager({
       (activeFilter === 'HONEYTOKEN' && decoy.category === 'Honeytoken') ||
       (activeFilter === 'ENDPOINT' && decoy.category === 'Endpoint');
 
+    const query = searchQuery.toLowerCase();
     const matchesSearch =
-      decoy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      decoy.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      decoy.tripwireType.toLowerCase().includes(searchQuery.toLowerCase());
+      decoy.name?.toLowerCase().includes(query) ||
+      decoy.type?.toLowerCase().includes(query) ||
+      decoy.insertedBy?.toLowerCase().includes(query) ||
+      decoy.tripwireType?.toLowerCase().includes(query);
 
     return matchesFilter && matchesSearch;
   });
@@ -67,12 +74,13 @@ export default function DecoyManager({
 
     const newDecoy = {
       ...formData,
-      id: `decoy-dyn-${Date.now().toString(36)}`,
-      fileSize: formData.category === 'Honeyfile' ? `${(Math.random() * 4 + 1).toFixed(1)} MB` : 'N/A',
+      id: `owner-decoy-${Date.now().toString(36)}`,
+      fileSize: formData.category === 'Honeyfile' ? formData.fileSize || '1.8 MB' : 'N/A',
       canaryToken: `cnry-${Math.random().toString(36).substring(2, 9)}`,
       status: 'Armed',
       triggersCount: 0,
       lastTriggered: null,
+      insertedBy: formData.insertedBy || 'Owner (You)',
       createdAt: new Date().toISOString(),
     };
 
@@ -80,14 +88,30 @@ export default function DecoyManager({
     setIsModalOpen(false);
     setFormData({
       name: '',
+      insertedBy: 'Owner (You)',
       category: 'Honeyfile',
       nodeId: 'node-workstation',
       type: 'Canary Document',
       tripwireType: 'Embedded DNS Webhook Beacon',
       realismScore: 98,
+      fileSize: '1.8 MB',
       description: '',
       previewContent: '',
     });
+  };
+
+  const handleDeployPreset = (preset) => {
+    const newDecoy = {
+      ...preset,
+      id: `owner-decoy-${Date.now().toString(36)}`,
+      insertedBy: 'Owner (You)',
+      canaryToken: `cnry-${Math.random().toString(36).substring(2, 9)}`,
+      status: 'Armed',
+      triggersCount: 0,
+      lastTriggered: null,
+      createdAt: new Date().toISOString(),
+    };
+    onDeployDecoy(newDecoy);
   };
 
   const getCategoryIcon = (category) => {
@@ -105,7 +129,7 @@ export default function DecoyManager({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* Top Decoys Metrics Grid */}
+      {/* Top Metrics Cards */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
@@ -113,14 +137,14 @@ export default function DecoyManager({
       }}>
         <div className="glass-panel" style={{ padding: 18, background: '#ffffff' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>TOTAL DYNAMIC DECOYS</span>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>INSERTED DECOYS</span>
             <ShieldCheck size={18} color="#059669" />
           </div>
-          <div style={{ fontSize: 30, fontWeight: 700, color: 'var(--text-primary)', marginTop: 8 }}>
+          <div style={{ fontSize: 32, fontWeight: 700, color: 'var(--text-primary)', marginTop: 8 }}>
             {decoys.length}
           </div>
           <p style={{ fontSize: 11, color: '#059669', marginTop: 4, fontWeight: 600 }}>
-            100% SENSORS ACTIVE ACROSS 6 NODES
+            {decoys.length === 0 ? 'NO DEMO RECORDS • AWAITING OWNER INSERT' : 'AUTHENTIC OWNER-INSERTED ASSETS'}
           </p>
         </div>
 
@@ -129,40 +153,52 @@ export default function DecoyManager({
             <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>LIVE TRIPWIRE ALARMS</span>
             <Flame size={18} color="#dc2626" />
           </div>
-          <div style={{ fontSize: 30, fontWeight: 700, color: '#dc2626', marginTop: 8 }}>
+          <div style={{ fontSize: 32, fontWeight: 700, color: '#dc2626', marginTop: 8 }}>
             {decoys.reduce((sum, d) => sum + (d.triggersCount || 0), 0)}
           </div>
           <p style={{ fontSize: 11, color: '#dc2626', marginTop: 4, fontWeight: 600 }}>
-            ZERO FALSE-POSITIVE TRAPS
+            REAL-TIME INTRUSION TRIPS
           </p>
         </div>
 
         <div className="glass-panel" style={{ padding: 18, background: '#ffffff' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>AVG REALISM CAMOUFLAGE</span>
-            <Sparkles size={18} color="#0284c7" />
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>RECORD SOURCE</span>
+            <UserCheck size={18} color="#0284c7" />
           </div>
-          <div style={{ fontSize: 30, fontWeight: 700, color: '#0284c7', marginTop: 8 }}>
-            {(decoys.reduce((sum, d) => sum + (d.realismScore || 95), 0) / decoys.length).toFixed(1)}%
+          <div style={{ fontSize: 20, fontWeight: 700, color: '#0284c7', marginTop: 12 }}>
+            Owner / User Defined
           </div>
-          <p style={{ fontSize: 11, color: '#0284c7', marginTop: 4, fontWeight: 600 }}>
-            AUTHENTIC ENTERPRISE CAMOUFLAGE
+          <p style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 500 }}>
+            0 DEMO MOCKS • LIVE STORAGE
           </p>
         </div>
 
         <div className="glass-panel" style={{ padding: 18, background: '#ffffff' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>DEPLOYMENT</span>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>ACTION</span>
             <Plus size={18} color="#d97706" />
           </div>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="cyber-btn cyber-btn-primary"
-            style={{ width: '100%', marginTop: 8, padding: '10px 14px' }}
-          >
-            <Plus size={16} />
-            <span>Deploy Dynamic Decoy</span>
-          </button>
+          <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="cyber-btn cyber-btn-primary"
+              style={{ flex: 1, padding: '10px 12px' }}
+            >
+              <Plus size={16} />
+              <span>Insert Decoy</span>
+            </button>
+            {decoys.length > 0 && onClearAllDecoys && (
+              <button
+                onClick={onClearAllDecoys}
+                className="cyber-btn cyber-btn-sm"
+                style={{ borderColor: '#fca5a5', color: '#dc2626' }}
+                title="Clear all inserted decoys"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -196,7 +232,7 @@ export default function DecoyManager({
             <Search size={15} color="var(--text-muted)" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }} />
             <input
               type="text"
-              placeholder="Search decoy name, token, hash..."
+              placeholder="Search inserted decoys..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
@@ -214,135 +250,189 @@ export default function DecoyManager({
           </div>
         </div>
 
-        {/* Decoys Table */}
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid var(--border-subtle)', background: '#f8fafc', color: 'var(--text-secondary)', fontSize: 11, fontFamily: 'var(--font-mono)' }}>
-                <th style={{ padding: '12px 14px' }}>DECOY ASSET</th>
-                <th style={{ padding: '12px 14px' }}>CATEGORY</th>
-                <th style={{ padding: '12px 14px' }}>LOCATION NODE</th>
-                <th style={{ padding: '12px 14px' }}>TRIPWIRE MECHANISM</th>
-                <th style={{ padding: '12px 14px' }}>REALISM</th>
-                <th style={{ padding: '12px 14px' }}>STATUS</th>
-                <th style={{ padding: '12px 14px', textAlign: 'right' }}>ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredDecoys.map((decoy) => (
-                <tr
-                  key={decoy.id}
+        {/* When no decoys are inserted yet: Clean Empty State */}
+        {filteredDecoys.length === 0 ? (
+          <div style={{
+            padding: '40px 20px',
+            textAlign: 'center',
+            background: '#f8fafc',
+            border: '2px dashed var(--border-strong)',
+            borderRadius: 8,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 14,
+          }}>
+            <div style={{
+              width: 50,
+              height: 50,
+              borderRadius: '50%',
+              background: '#e0f2fe',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid #bae6fd',
+            }}>
+              <Layers size={24} color="#0284c7" />
+            </div>
+
+            <div>
+              <h3 style={{ fontSize: 17, color: 'var(--text-primary)', fontWeight: 700 }}>
+                {searchQuery ? 'No Decoys Match Your Search' : 'No Decoy Records Deployed Yet'}
+              </h3>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, maxWidth: 500 }}>
+                All static demo records have been removed. You (or any authorized user) can now insert realistic decoy assets directly into the simulated network.
+              </p>
+            </div>
+
+            {/* Quick Actions */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginTop: 6 }}>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="cyber-btn cyber-btn-primary"
+              >
+                <Plus size={15} />
+                <span>Insert Custom Decoy Asset</span>
+              </button>
+
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>or Quick Deploy Template:</span>
+
+              {DECOY_PRESETS.map((p, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleDeployPreset(p)}
+                  className="cyber-badge"
                   style={{
-                    borderBottom: '1px solid var(--border-subtle)',
-                    transition: 'background var(--transition-fast)',
+                    cursor: 'pointer',
+                    background: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    padding: '6px 10px',
+                    fontSize: 11,
+                    color: '#0284c7',
+                    fontWeight: 600,
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#f8fafc')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  title={`Deploy ${p.name}`}
                 >
-                  <td style={{ padding: '14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{
-                        width: 34,
-                        height: 34,
-                        borderRadius: 6,
-                        background: '#f1f5f9',
-                        border: '1px solid var(--border-subtle)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}>
-                        {getCategoryIcon(decoy.category)}
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 13 }}>
-                          {decoy.name}
-                        </div>
-                        <div className="mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-                          TOKEN: {decoy.canaryToken}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-
-                  <td style={{ padding: '14px' }}>
-                    <span className="cyber-badge" style={{ fontSize: 10 }}>
-                      {decoy.category}
-                    </span>
-                  </td>
-
-                  <td style={{ padding: '14px', fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500 }}>
-                    {getNodeName(decoy.nodeId)}
-                  </td>
-
-                  <td style={{ padding: '14px', fontSize: 12, color: '#0284c7', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
-                    {decoy.tripwireType}
-                  </td>
-
-                  <td style={{ padding: '14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{
-                        width: 50,
-                        height: 6,
-                        background: '#e2e8f0',
-                        borderRadius: 3,
-                        overflow: 'hidden',
-                      }}>
+                  <Zap size={12} color="#0284c7" />
+                  <span>+ {p.name.split('.')[0]}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          /* Decoys Table */
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid var(--border-subtle)', background: '#f8fafc', color: 'var(--text-secondary)', fontSize: 11, fontFamily: 'var(--font-mono)' }}>
+                  <th style={{ padding: '12px 14px' }}>DECOY ASSET</th>
+                  <th style={{ padding: '12px 14px' }}>INSERTED BY</th>
+                  <th style={{ padding: '12px 14px' }}>CATEGORY</th>
+                  <th style={{ padding: '12px 14px' }}>LOCATION NODE</th>
+                  <th style={{ padding: '12px 14px' }}>TRIPWIRE MECHANISM</th>
+                  <th style={{ padding: '12px 14px' }}>STATUS</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'right' }}>ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredDecoys.map((decoy) => (
+                  <tr
+                    key={decoy.id}
+                    style={{
+                      borderBottom: '1px solid var(--border-subtle)',
+                      transition: 'background var(--transition-fast)',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#f8fafc')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <td style={{ padding: '14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div style={{
-                          width: `${decoy.realismScore}%`,
-                          height: '100%',
-                          background: 'linear-gradient(90deg, #0284c7, #059669)',
-                        }} />
+                          width: 34,
+                          height: 34,
+                          borderRadius: 6,
+                          background: '#f1f5f9',
+                          border: '1px solid var(--border-subtle)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}>
+                          {getCategoryIcon(decoy.category)}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 13 }}>
+                            {decoy.name}
+                          </div>
+                          <div className="mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+                            TOKEN: {decoy.canaryToken}
+                          </div>
+                        </div>
                       </div>
-                      <span className="mono" style={{ fontSize: 11, color: '#059669', fontWeight: 700 }}>
-                        {decoy.realismScore}%
+                    </td>
+
+                    <td style={{ padding: '14px' }}>
+                      <span className="cyber-badge cyber-badge-cyan" style={{ fontSize: 10, fontWeight: 700 }}>
+                        👤 {decoy.insertedBy || 'Owner'}
                       </span>
-                    </div>
-                  </td>
+                    </td>
 
-                  <td style={{ padding: '14px' }}>
-                    <span className={`cyber-badge ${decoy.triggersCount > 0 ? 'cyber-badge-crimson' : 'cyber-badge-emerald'}`}>
-                      {decoy.triggersCount > 0 ? `TRIPPED (${decoy.triggersCount})` : 'ARMED'}
-                    </span>
-                  </td>
+                    <td style={{ padding: '14px' }}>
+                      <span className="cyber-badge" style={{ fontSize: 10 }}>
+                        {decoy.category}
+                      </span>
+                    </td>
 
-                  <td style={{ padding: '14px', textAlign: 'right' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
-                      <button
-                        onClick={() => onViewDecoy(decoy)}
-                        className="cyber-btn cyber-btn-sm"
-                        title="Inspect Decoy Details & Payload"
-                      >
-                        <Eye size={12} />
-                        <span>Inspect</span>
-                      </button>
+                    <td style={{ padding: '14px', fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500 }}>
+                      {getNodeName(decoy.nodeId)}
+                    </td>
 
-                      <button
-                        onClick={() => onTestTripwire(decoy)}
-                        className="cyber-btn cyber-btn-sm"
-                        style={{ borderColor: '#fde68a', background: '#fffbeb', color: '#b45309' }}
-                        title="Simulate Attacker Interacting with this Decoy"
-                      >
-                        <Flame size={12} />
-                        <span>Trip Trap</span>
-                      </button>
+                    <td style={{ padding: '14px', fontSize: 12, color: '#0284c7', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+                      {decoy.tripwireType}
+                    </td>
 
-                      {onDeleteDecoy && (
+                    <td style={{ padding: '14px' }}>
+                      <span className={`cyber-badge ${decoy.triggersCount > 0 ? 'cyber-badge-crimson' : 'cyber-badge-emerald'}`}>
+                        {decoy.triggersCount > 0 ? `TRIPPED (${decoy.triggersCount})` : 'ARMED'}
+                      </span>
+                    </td>
+
+                    <td style={{ padding: '14px', textAlign: 'right' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
+                        <button
+                          onClick={() => onViewDecoy(decoy)}
+                          className="cyber-btn cyber-btn-sm"
+                          title="Inspect Decoy Details & Payload"
+                        >
+                          <Eye size={12} />
+                          <span>Inspect</span>
+                        </button>
+
+                        <button
+                          onClick={() => onTestTripwire(decoy)}
+                          className="cyber-btn cyber-btn-sm"
+                          style={{ borderColor: '#fde68a', background: '#fffbeb', color: '#b45309' }}
+                          title="Simulate Attacker Interacting with this Decoy"
+                        >
+                          <Flame size={12} />
+                          <span>Trip Trap</span>
+                        </button>
+
                         <button
                           onClick={() => onDeleteDecoy(decoy.id)}
                           className="cyber-btn cyber-btn-sm"
-                          style={{ padding: '5px 8px', color: '#dc2626' }}
-                          title="Remove Decoy"
+                          style={{ borderColor: '#fca5a5', color: '#dc2626' }}
+                          title="Remove Decoy Record"
                         >
                           <Trash2 size={12} />
                         </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Deploy New Decoy Modal */}
@@ -352,33 +442,57 @@ export default function DecoyManager({
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, borderBottom: '1px solid var(--border-subtle)', paddingBottom: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Sparkles size={20} color="#0284c7" />
-                <h3 style={{ fontSize: 18, color: 'var(--text-primary)' }}>DEPLOY NEW DYNAMIC DECOY ASSET</h3>
+                <h3 style={{ fontSize: 18, color: 'var(--text-primary)' }}>INSERT NEW DECOY ASSET (OWNER / USER)</h3>
               </div>
               <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 18 }}>✕</button>
             </div>
 
             <form onSubmit={handleCreateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6, fontWeight: 600 }}>
-                  DECOY ASSET NAME (Realistic File / Credential / Service)
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. 2027_Executive_M&A_Strategy.docx or aws_prod_master_key.json"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  style={{
-                    width: '100%',
-                    background: '#f8fafc',
-                    border: '1px solid var(--border-strong)',
-                    borderRadius: 6,
-                    padding: '8px 12px',
-                    color: 'var(--text-primary)',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 13,
-                  }}
-                />
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6, fontWeight: 600 }}>
+                    DECOY ASSET NAME (File, Credential, or Service)
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. 2027_Executive_M&A_Strategy.docx or db_root_prod.env"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    style={{
+                      width: '100%',
+                      background: '#f8fafc',
+                      border: '1px solid var(--border-strong)',
+                      borderRadius: 6,
+                      padding: '8px 12px',
+                      color: 'var(--text-primary)',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 13,
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6, fontWeight: 600 }}>
+                    INSERTED BY (OWNER / USER)
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Owner (You)"
+                    value={formData.insertedBy}
+                    onChange={(e) => setFormData({ ...formData, insertedBy: e.target.value })}
+                    style={{
+                      width: '100%',
+                      background: '#f8fafc',
+                      border: '1px solid var(--border-strong)',
+                      borderRadius: 6,
+                      padding: '8px 12px',
+                      color: 'var(--text-primary)',
+                      fontSize: 13,
+                    }}
+                  />
+                </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
@@ -460,7 +574,7 @@ export default function DecoyManager({
                 </label>
                 <textarea
                   rows={3}
-                  placeholder="Enter synthetic decoy content, credentials, or instructions..."
+                  placeholder="Enter realistic decoy content, credentials, or instructions..."
                   value={formData.previewContent}
                   onChange={(e) => setFormData({ ...formData, previewContent: e.target.value })}
                   style={{
@@ -489,7 +603,7 @@ export default function DecoyManager({
                   className="cyber-btn cyber-btn-primary"
                 >
                   <Sparkles size={14} />
-                  <span>Deploy to Sensor Grid</span>
+                  <span>Insert to Sensor Grid</span>
                 </button>
               </div>
             </form>
