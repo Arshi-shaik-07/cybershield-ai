@@ -12,6 +12,7 @@ import IncidentReportModal from './components/IncidentReportModal';
 import { 
   INITIAL_NODES, 
   INITIAL_EDGES, 
+  INITIAL_DECOYS,
   ATTACK_SCENARIOS, 
   getGenesisBlock 
 } from './utils/initialData';
