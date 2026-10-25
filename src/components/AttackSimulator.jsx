@@ -100,11 +100,41 @@ export default function AttackSimulator({
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#ffffff', padding: '3px 6px', borderRadius: 6, border: '1px solid #cbd5e1' }}>
               <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600, padding: '0 4px' }}>SPEED:</span>
               <button
+                onClick={() => onChangeSpeed && onChangeSpeed(1500)}
+                style={{
+                  border: 'none',
+                  background: detectionSpeed <= 1800 ? '#059669' : 'transparent',
+                  color: detectionSpeed <= 1800 ? '#ffffff' : '#475569',
+                  borderRadius: 4,
+                  padding: '3px 8px',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Turbo (1.5s)
+              </button>
+              <button
+                onClick={() => onChangeSpeed && onChangeSpeed(2500)}
+                style={{
+                  border: 'none',
+                  background: detectionSpeed > 1800 && detectionSpeed <= 3500 ? '#059669' : 'transparent',
+                  color: detectionSpeed > 1800 && detectionSpeed <= 3500 ? '#ffffff' : '#475569',
+                  borderRadius: 4,
+                  padding: '3px 8px',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Fast (2.5s)
+              </button>
+              <button
                 onClick={() => onChangeSpeed && onChangeSpeed(5000)}
                 style={{
                   border: 'none',
-                  background: detectionSpeed <= 5000 ? '#059669' : 'transparent',
-                  color: detectionSpeed <= 5000 ? '#ffffff' : '#475569',
+                  background: detectionSpeed > 3500 ? '#059669' : 'transparent',
+                  color: detectionSpeed > 3500 ? '#ffffff' : '#475569',
                   borderRadius: 4,
                   padding: '3px 8px',
                   fontSize: 11,
@@ -112,37 +142,7 @@ export default function AttackSimulator({
                   cursor: 'pointer',
                 }}
               >
-                Fast (5s)
-              </button>
-              <button
-                onClick={() => onChangeSpeed && onChangeSpeed(8000)}
-                style={{
-                  border: 'none',
-                  background: detectionSpeed > 5000 && detectionSpeed <= 9000 ? '#059669' : 'transparent',
-                  color: detectionSpeed > 5000 && detectionSpeed <= 9000 ? '#ffffff' : '#475569',
-                  borderRadius: 4,
-                  padding: '3px 8px',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
-              >
-                Normal (8s)
-              </button>
-              <button
-                onClick={() => onChangeSpeed && onChangeSpeed(14000)}
-                style={{
-                  border: 'none',
-                  background: detectionSpeed > 9000 ? '#059669' : 'transparent',
-                  color: detectionSpeed > 9000 ? '#ffffff' : '#475569',
-                  borderRadius: 4,
-                  padding: '3px 8px',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
-              >
-                Relaxed (14s)
+                Standard (5s)
               </button>
             </div>
 

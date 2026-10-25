@@ -125,14 +125,14 @@ export default function App() {
   const [activeAttackPath, setActiveAttackPath] = useState([]);
   const timerRef = useRef(null);
 
-  // Autonomous Threat Detection Engine State (AUTOMATIC FRAUD IDENTIFICATION)
+  // Autonomous Threat Detection Engine State (AUTOMATIC FAST FRAUD IDENTIFICATION)
   const [autonomousMode, setAutonomousMode] = useState(true);
-  const [detectionSpeed, setDetectionSpeed] = useState(8000);
+  const [detectionSpeed, setDetectionSpeed] = useState(2500);
   const [autoDetectedCount, setAutoDetectedCount] = useState(0);
   const [lastAutoDetection, setLastAutoDetection] = useState(null);
   const [recentAutoIntrusions, setRecentAutoIntrusions] = useState([]);
-  const [autoCycleScenarios, setAutoCycleScenarios] = useState(false);
-  const autoCycleScenariosRef = useRef(false);
+  const [autoCycleScenarios, setAutoCycleScenarios] = useState(true);
+  const autoCycleScenariosRef = useRef(true);
   const autoThreatIndexRef = useRef(0);
 
   // Forensics & Blockchain State
@@ -374,7 +374,7 @@ export default function App() {
     if (stepIndex + 1 < scenario.steps.length) {
       timerRef.current = setTimeout(() => {
         executeScenarioStep(scenario, stepIndex + 1);
-      }, step.delayMs || 2200);
+      }, 1100);
     } else {
       setIsRunning(false);
       soundFX.playContainmentSuccess();
@@ -384,10 +384,20 @@ export default function App() {
           const currentIdx = ATTACK_SCENARIOS.findIndex(s => s.id === scenario.id);
           const nextIdx = (currentIdx + 1) % ATTACK_SCENARIOS.length;
           handleLaunchScenario(ATTACK_SCENARIOS[nextIdx].id);
-        }, 3500);
+        }, 1500);
       }
     }
   };
+
+  // Auto-start scenario execution immediately on mount
+  useEffect(() => {
+    const initTimer = setTimeout(() => {
+      if (autoCycleScenariosRef.current) {
+        handleLaunchScenario(ATTACK_SCENARIOS[0].id);
+      }
+    }, 600);
+    return () => clearTimeout(initTimer);
+  }, []);
 
   const handleToggleAutoCycle = () => {
     const next = !autoCycleScenarios;
