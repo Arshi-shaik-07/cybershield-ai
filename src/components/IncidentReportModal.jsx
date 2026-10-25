@@ -55,26 +55,26 @@ export default function IncidentReportModal({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 840, padding: 30 }}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 840, padding: 30, background: '#ffffff' }}>
         {/* Report Top Header */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '2px solid var(--cyber-cyan)',
+          borderBottom: '2px solid #0284c7',
           paddingBottom: 16,
           marginBottom: 20,
         }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span className="cyber-badge cyber-badge-cyan" style={{ fontSize: 11 }}>
+              <span className="cyber-badge cyber-badge-cyan" style={{ fontSize: 11, fontWeight: 700 }}>
                 CYBER DECEPTION & BLOCKCHAIN AUDIT
               </span>
               <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                 REF: {reportId}
               </span>
             </div>
-            <h2 style={{ fontSize: 22, color: '#fff', marginTop: 4 }}>
+            <h2 style={{ fontSize: 22, color: 'var(--text-primary)', marginTop: 4 }}>
               EXECUTIVE INCIDENT FORENSIC & PROVENANCE REPORT
             </h2>
           </div>
@@ -88,7 +88,7 @@ export default function IncidentReportModal({
               <Printer size={13} />
               <span>Print Report</span>
             </button>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#fff', fontSize: 20, cursor: 'pointer', marginLeft: 6 }}>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer', marginLeft: 6 }}>
               ✕
             </button>
           </div>
@@ -101,30 +101,30 @@ export default function IncidentReportModal({
           gap: 12,
           marginBottom: 20,
         }}>
-          <div style={{ background: 'rgba(8, 14, 28, 0.7)', padding: 12, borderRadius: 6, border: '1px solid var(--border-subtle)' }}>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>THREAT CONDITION</span>
-            <div style={{ fontSize: 14, fontWeight: 700, color: threatLevel === 'CRITICAL' ? 'var(--cyber-crimson)' : 'var(--cyber-emerald)', marginTop: 4 }}>
+          <div style={{ background: '#f8fafc', padding: 12, borderRadius: 6, border: '1px solid var(--border-subtle)' }}>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>THREAT CONDITION</span>
+            <div style={{ fontSize: 14, fontWeight: 700, color: threatLevel === 'CRITICAL' ? '#dc2626' : '#059669', marginTop: 4 }}>
               {threatLevel}
             </div>
           </div>
 
-          <div style={{ background: 'rgba(8, 14, 28, 0.7)', padding: 12, borderRadius: 6, border: '1px solid var(--border-subtle)' }}>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>LOGGED INCIDENTS</span>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginTop: 4 }}>
+          <div style={{ background: '#f8fafc', padding: 12, borderRadius: 6, border: '1px solid var(--border-subtle)' }}>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>LOGGED INCIDENTS</span>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginTop: 4 }}>
               {incidents.length} EVENTS
             </div>
           </div>
 
-          <div style={{ background: 'rgba(8, 14, 28, 0.7)', padding: 12, borderRadius: 6, border: '1px solid var(--border-subtle)' }}>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>DECOYS TRIPPED</span>
-            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--cyber-amber)', marginTop: 4 }}>
+          <div style={{ background: '#f8fafc', padding: 12, borderRadius: 6, border: '1px solid var(--border-subtle)' }}>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>DECOYS TRIPPED</span>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#b45309', marginTop: 4 }}>
               {decoys.filter(d => d.triggersCount > 0).length} OF {decoys.length}
             </div>
           </div>
 
-          <div style={{ background: 'rgba(8, 14, 28, 0.7)', padding: 12, borderRadius: 6, border: '1px solid var(--border-subtle)' }}>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>BLOCKCHAIN PROOF</span>
-            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--cyber-cyan)', marginTop: 4 }}>
+          <div style={{ background: '#f8fafc', padding: 12, borderRadius: 6, border: '1px solid var(--border-subtle)' }}>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>BLOCKCHAIN PROOF</span>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#0284c7', marginTop: 4 }}>
               {blocks.length} BLOCKS SEALED
             </div>
           </div>
@@ -132,8 +132,8 @@ export default function IncidentReportModal({
 
         {/* Reconstructed Kill-Chain Table */}
         <div style={{ marginBottom: 20 }}>
-          <h4 style={{ fontSize: 15, color: '#fff', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Crosshair size={16} color="var(--cyber-cyan)" />
+          <h4 style={{ fontSize: 15, color: 'var(--text-primary)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Crosshair size={16} color="#0284c7" />
             RECONSTRUCTED INTRUDER KILL-CHAIN & MITRE ATT&CK ALIGNMENT
           </h4>
 
@@ -144,7 +144,7 @@ export default function IncidentReportModal({
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)', textAlign: 'left' }}>
+                <tr style={{ borderBottom: '2px solid var(--border-subtle)', background: '#f8fafc', color: 'var(--text-secondary)', textAlign: 'left' }}>
                   <th style={{ padding: '8px 10px' }}>PHASE</th>
                   <th style={{ padding: '8px 10px' }}>MITRE TACTIC</th>
                   <th style={{ padding: '8px 10px' }}>TECHNIQUE</th>
@@ -154,12 +154,12 @@ export default function IncidentReportModal({
               </thead>
               <tbody>
                 {incidents.map((inc, i) => (
-                  <tr key={inc.id || i} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                    <td style={{ padding: '8px 10px', color: '#fff', fontWeight: 600 }}>0{i + 1}</td>
-                    <td style={{ padding: '8px 10px', color: 'var(--cyber-cyan)' }}>{inc.tactic || 'Discovery'}</td>
+                  <tr key={inc.id || i} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                    <td style={{ padding: '8px 10px', color: 'var(--text-primary)', fontWeight: 700 }}>0{i + 1}</td>
+                    <td style={{ padding: '8px 10px', color: '#0284c7', fontWeight: 600 }}>{inc.tactic || 'Discovery'}</td>
                     <td style={{ padding: '8px 10px', color: 'var(--text-secondary)' }}>{inc.technique || 'T1083'}</td>
-                    <td style={{ padding: '8px 10px', color: 'var(--cyber-amber)' }}>{inc.decoyId || 'Decoy Gateway'}</td>
-                    <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--cyber-emerald)' }}>
+                    <td style={{ padding: '8px 10px', color: '#b45309', fontWeight: 500 }}>{inc.decoyId || 'Decoy Gateway'}</td>
+                    <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)', fontSize: 10, color: '#059669', fontWeight: 600 }}>
                       {inc.evidenceHash ? inc.evidenceHash.substring(0, 18) + '...' : '0x00...'}
                     </td>
                   </tr>
@@ -171,21 +171,21 @@ export default function IncidentReportModal({
 
         {/* Blockchain Cryptographic Provenance Guarantee */}
         <div style={{
-          background: 'rgba(0, 240, 255, 0.05)',
-          border: '1px solid var(--border-strong)',
+          background: '#f0f9ff',
+          border: '1px solid #bae6fd',
           borderRadius: 8,
           padding: 14,
           display: 'flex',
           alignItems: 'center',
           gap: 12,
         }}>
-          <CheckCircle2 size={24} color="var(--cyber-emerald)" style={{ flexShrink: 0 }} />
+          <CheckCircle2 size={24} color="#059669" style={{ flexShrink: 0 }} />
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
               MATHEMATICALLY TAMPER-EVIDENT FORENSIC EVIDENCE
             </div>
             <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>
-              All incident telemetry, canary pingbacks, and lateral movement hops were cryptographically anchored in the DecoyGrid blockchain ledger. Any retrospective log deletion or anti-forensic modification by threat actors is immediately detectable.
+              All dynamic incident telemetry, canary pingbacks, and lateral movement hops are cryptographically anchored in the DecoyGrid blockchain ledger. Any retrospective log deletion or anti-forensic modification by threat actors is immediately detectable.
             </p>
           </div>
         </div>

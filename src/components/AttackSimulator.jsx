@@ -9,8 +9,10 @@ import {
   ShieldAlert, 
   Zap, 
   Layers,
-  Clock
+  Clock,
+  BellRing
 } from 'lucide-react';
+import { soundFX } from '../utils/soundEffects';
 
 export default function AttackSimulator({
   scenarios,
@@ -24,8 +26,62 @@ export default function AttackSimulator({
 }) {
   const currentScenario = scenarios.find(s => s.id === activeScenarioId);
 
+  const handleTestSolidSound = () => {
+    soundFX.playAlarmAlert();
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Top Banner with Alert Sound Tester */}
+      <div className="glass-panel" style={{
+        padding: '14px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: 12,
+        background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
+        border: '1px solid #bae6fd',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{
+            width: 36,
+            height: 36,
+            borderRadius: 8,
+            background: '#e0f2fe',
+            border: '1px solid #bae6fd',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <BellRing size={20} color="#0284c7" />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>
+              HIGH-IMPACT CYBER INTRUSION ALARM ACTIVE
+            </div>
+            <div style={{ fontSize: 12, color: '#64748b' }}>
+              Upgraded solid dual-oscillator klaxon with sub-bass punch & dual-pulse transient.
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={handleTestSolidSound}
+          className="cyber-btn cyber-btn-sm"
+          style={{
+            borderColor: '#fca5a5',
+            background: '#fef2f2',
+            color: '#dc2626',
+            fontWeight: 700,
+          }}
+          title="Play solid intrusion alert sound"
+        >
+          <BellRing size={14} />
+          <span>Test Solid Alert Sound</span>
+        </button>
+      </div>
+
       {/* Scenario Selection Grid */}
       <div style={{
         display: 'grid',
@@ -41,11 +97,12 @@ export default function AttackSimulator({
               className={`glass-panel ${isActive ? 'glass-panel-glow' : ''}`}
               style={{
                 padding: 18,
-                border: isActive ? '1px solid var(--cyber-cyan)' : '1px solid var(--border-subtle)',
+                border: isActive ? '2px solid #0284c7' : '1px solid var(--border-subtle)',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
                 gap: 14,
+                background: '#ffffff',
               }}
             >
               <div>
@@ -58,14 +115,14 @@ export default function AttackSimulator({
                   </span>
                 </div>
 
-                <h3 style={{ fontSize: 17, color: '#fff', marginBottom: 6 }}>
+                <h3 style={{ fontSize: 17, color: 'var(--text-primary)', marginBottom: 6 }}>
                   {scenario.name}
                 </h3>
                 <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
                   {scenario.description}
                 </p>
 
-                <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--cyber-cyan)', fontFamily: 'var(--font-mono)' }}>
+                <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#0284c7', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
                   <Crosshair size={13} />
                   <span>TARGET: {scenario.targetZone}</span>
                 </div>
@@ -114,17 +171,17 @@ export default function AttackSimulator({
 
       {/* Active Kill-Chain Execution Pipeline */}
       {currentScenario && (
-        <div className="glass-panel" style={{ padding: 22, border: '1px solid var(--cyber-cyan)' }}>
+        <div className="glass-panel" style={{ padding: 22, border: '2px solid #0284c7', background: '#ffffff' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Zap size={18} color="var(--cyber-cyan)" />
-                <h3 style={{ fontSize: 18, color: '#fff' }}>
+                <Zap size={18} color="#0284c7" />
+                <h3 style={{ fontSize: 18, color: 'var(--text-primary)' }}>
                   ACTIVE KILL-CHAIN: {currentScenario.name.toUpperCase()}
                 </h3>
               </div>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
-                AUTOMATED INTRUDER REPLAY ENGINE • MITRE ATT&CK RECONSTRUCTION
+                AUTOMATED INTRUDER REPLAY ENGINE • DYNAMIC MITRE ATT&CK TELEMETRY
               </p>
             </div>
 
@@ -142,24 +199,23 @@ export default function AttackSimulator({
             gap: 12,
             overflowX: 'auto',
           }}>
-            {currentScenario.steps.map((step, idx) => {
+            {currentScenario.steps.map((step) => {
               const isPast = activeStepIndex > step.stepIndex;
               const isCurrent = activeStepIndex === step.stepIndex;
-              const isPending = activeStepIndex < step.stepIndex;
 
               return (
                 <div
                   key={step.stepIndex}
                   style={{
                     background: isCurrent
-                      ? 'rgba(0, 240, 255, 0.1)'
+                      ? '#f0f9ff'
                       : isPast
-                      ? 'rgba(16, 185, 129, 0.08)'
-                      : 'rgba(8, 14, 28, 0.6)',
+                      ? '#ecfdf5'
+                      : '#f8fafc',
                     border: isCurrent
-                      ? '1px solid var(--cyber-cyan)'
+                      ? '2px solid #0284c7'
                       : isPast
-                      ? '1px solid var(--cyber-emerald)'
+                      ? '1px solid #059669'
                       : '1px solid var(--border-subtle)',
                     borderRadius: 8,
                     padding: 12,
@@ -171,24 +227,24 @@ export default function AttackSimulator({
                     <span className="mono" style={{
                       fontSize: 11,
                       fontWeight: 700,
-                      color: isCurrent ? 'var(--cyber-cyan)' : isPast ? 'var(--cyber-emerald)' : 'var(--text-muted)'
+                      color: isCurrent ? '#0284c7' : isPast ? '#059669' : 'var(--text-muted)'
                     }}>
                       PHASE 0{step.stepIndex}
                     </span>
 
-                    {isPast && <CheckCircle2 size={14} color="var(--cyber-emerald)" />}
+                    {isPast && <CheckCircle2 size={14} color="#059669" />}
                     {isCurrent && (
                       <div style={{
                         width: 8,
                         height: 8,
                         borderRadius: '50%',
-                        background: 'var(--cyber-crimson)',
-                        animation: 'pulseAlert 1s infinite ease-in-out',
+                        background: '#dc2626',
+                        animation: 'pulseAlertLight 1s infinite ease-in-out',
                       }} />
                     )}
                   </div>
 
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', marginBottom: 4 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
                     {step.title.split(':')[0]}
                   </div>
 

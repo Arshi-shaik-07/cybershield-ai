@@ -26,11 +26,8 @@ export default function IncidentTimeline({
   onResetTimeline,
   onInspectIncident,
 }) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [filterSeverity, setFilterSeverity] = useState('ALL');
 
-  // Filter incidents
   const filteredIncidents = incidents.filter(inc => {
     if (filterSeverity === 'ALL') return true;
     return inc.severity.toLowerCase() === filterSeverity.toLowerCase();
@@ -39,38 +36,38 @@ export default function IncidentTimeline({
   const getSeverityStyle = (severity) => {
     switch (severity?.toLowerCase()) {
       case 'critical':
-        return { badge: 'cyber-badge-crimson', icon: <Flame size={14} color="var(--cyber-crimson)" /> };
+        return { badge: 'cyber-badge-crimson', icon: <Flame size={14} color="#dc2626" /> };
       case 'high':
-        return { badge: 'cyber-badge-amber', icon: <AlertTriangle size={14} color="var(--cyber-amber)" /> };
+        return { badge: 'cyber-badge-amber', icon: <AlertTriangle size={14} color="#b45309" /> };
       case 'medium':
-        return { badge: 'cyber-badge-purple', icon: <ShieldAlert size={14} color="var(--cyber-violet)" /> };
+        return { badge: 'cyber-badge-purple', icon: <ShieldAlert size={14} color="#7c3aed" /> };
       default:
-        return { badge: 'cyber-badge-cyan', icon: <History size={14} color="var(--cyber-cyan)" /> };
+        return { badge: 'cyber-badge-cyan', icon: <History size={14} color="#0284c7" /> };
     }
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Reconstructed Attack Path Flowchart */}
-      <div className="glass-panel" style={{ padding: 20 }}>
+      <div className="glass-panel" style={{ padding: 20, background: '#ffffff' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
-              width: 32,
-              height: 32,
+              width: 34,
+              height: 34,
               borderRadius: 6,
-              background: 'rgba(239, 68, 68, 0.12)',
+              background: '#fef2f2',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: '1px solid var(--cyber-crimson)',
+              border: '1px solid #fecaca',
             }}>
-              <ShieldAlert size={18} color="var(--cyber-crimson)" />
+              <ShieldAlert size={18} color="#dc2626" />
             </div>
             <div>
-              <h3 style={{ fontSize: 17, color: '#fff' }}>RECONSTRUCTED INTRUDER MOVEMENT PATH</h3>
+              <h3 style={{ fontSize: 17, color: 'var(--text-primary)' }}>RECONSTRUCTED INTRUDER MOVEMENT PATH</h3>
               <p style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                LATERAL TRAJECTORY CORRELATION • SENSOR TRIPWIRE RECONSTRUCTION
+                LATERAL TRAJECTORY CORRELATION • DYNAMIC SENSOR TRIPWIRE RECONSTRUCTION
               </p>
             </div>
           </div>
@@ -108,10 +105,11 @@ export default function IncidentTimeline({
             color: 'var(--text-muted)',
             fontFamily: 'var(--font-mono)',
             fontSize: 12,
-            border: '1px dashed var(--border-subtle)',
+            border: '2px dashed var(--border-strong)',
             borderRadius: 8,
+            background: '#f8fafc',
           }}>
-            NO ACTIVE INTRUSIONS LOGGED. LAUNCH AN ATTACK SCENARIO OR RUN TERMINAL EXPLOITS TO RECONSTRUCT MOVEMENT.
+            NO ACTIVE INTRUSIONS LOGGED. LAUNCH AN ATTACK SCENARIO OR RUN TERMINAL EXPLOITS TO RECONSTRUCT MOVEMENT DYNAMICALLY.
           </div>
         ) : (
           <div style={{
@@ -129,18 +127,18 @@ export default function IncidentTimeline({
                   <div
                     onClick={() => onPlaybackStep(idx)}
                     style={{
-                      minWidth: 220,
-                      background: isSelected ? 'rgba(0, 240, 255, 0.12)' : 'rgba(8, 14, 28, 0.75)',
-                      border: isSelected ? '1px solid var(--cyber-cyan)' : '1px solid var(--border-subtle)',
+                      minWidth: 230,
+                      background: isSelected ? '#f0f9ff' : '#f8fafc',
+                      border: isSelected ? '2px solid #0284c7' : '1px solid var(--border-subtle)',
                       borderRadius: 8,
                       padding: 12,
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
-                      boxShadow: isSelected ? '0 0 16px rgba(0, 240, 255, 0.25)' : 'none',
+                      boxShadow: isSelected ? '0 2px 10px rgba(2, 132, 199, 0.15)' : 'none',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span className="mono" style={{ fontSize: 10, color: 'var(--cyber-cyan)' }}>
+                      <span className="mono" style={{ fontSize: 10, color: '#0284c7', fontWeight: 700 }}>
                         HOP 0{idx + 1}
                       </span>
                       <span className={`cyber-badge ${getSeverityStyle(inc.severity).badge}`} style={{ fontSize: 9 }}>
@@ -148,14 +146,14 @@ export default function IncidentTimeline({
                       </span>
                     </div>
 
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', marginBottom: 4 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
                       {inc.title || inc.action}
                     </div>
 
-                    <div style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500 }}>
                       <span>{inc.sourceNode?.replace('node-', '')}</span>
-                      <ArrowRight size={11} color="var(--cyber-cyan)" />
-                      <span style={{ color: 'var(--cyber-amber)' }}>{inc.targetNode?.replace('node-', '')}</span>
+                      <ArrowRight size={11} color="#0284c7" />
+                      <span style={{ color: '#b45309' }}>{inc.targetNode?.replace('node-', '')}</span>
                     </div>
 
                     <div className="mono" style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 6 }}>
@@ -164,7 +162,7 @@ export default function IncidentTimeline({
                   </div>
 
                   {idx < incidents.length - 1 && (
-                    <ArrowRight size={18} color="rgba(0, 240, 255, 0.4)" style={{ flexShrink: 0 }} />
+                    <ArrowRight size={18} color="#94a3b8" style={{ flexShrink: 0 }} />
                   )}
                 </React.Fragment>
               );
@@ -174,7 +172,7 @@ export default function IncidentTimeline({
       </div>
 
       {/* Chronological Forensic Incident Log */}
-      <div className="glass-panel" style={{ padding: 20 }}>
+      <div className="glass-panel" style={{ padding: 20, background: '#ffffff' }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -184,9 +182,9 @@ export default function IncidentTimeline({
           gap: 12,
         }}>
           <div>
-            <h3 style={{ fontSize: 17, color: '#fff' }}>FORENSIC INCIDENT TIMELINE & MITRE ATT&CK MATRIX</h3>
+            <h3 style={{ fontSize: 17, color: 'var(--text-primary)' }}>FORENSIC INCIDENT TIMELINE & MITRE ATT&CK MATRIX</h3>
             <p style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-              DECOY SENSOR AUDIT TRAIL • TAMPER-PROOF HASH LOGGING
+              DYNAMIC DECOY SENSOR AUDIT TRAIL • TAMPER-PROOF HASH LOGGING
             </p>
           </div>
 
@@ -218,7 +216,7 @@ export default function IncidentTimeline({
                 <div
                   key={incident.id || idx}
                   style={{
-                    background: 'rgba(8, 14, 28, 0.7)',
+                    background: '#f8fafc',
                     border: '1px solid var(--border-subtle)',
                     borderRadius: 8,
                     padding: 14,
@@ -232,10 +230,10 @@ export default function IncidentTimeline({
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flex: 1, minWidth: 280 }}>
                     <div style={{
                       marginTop: 2,
-                      width: 28,
-                      height: 28,
+                      width: 30,
+                      height: 30,
                       borderRadius: 6,
-                      background: 'rgba(255, 255, 255, 0.04)',
+                      background: '#ffffff',
                       border: '1px solid var(--border-subtle)',
                       display: 'flex',
                       alignItems: 'center',
@@ -246,7 +244,7 @@ export default function IncidentTimeline({
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
                           {incident.title || incident.action}
                         </span>
                         <span className={`cyber-badge ${sev.badge}`}>
@@ -258,7 +256,7 @@ export default function IncidentTimeline({
                           </span>
                         )}
                         {incident.technique && (
-                          <span className="cyber-badge" style={{ color: 'var(--cyber-amber)' }}>
+                          <span className="cyber-badge" style={{ color: '#b45309', background: '#fffbeb', borderColor: '#fde68a' }}>
                             {incident.technique}
                           </span>
                         )}
@@ -269,10 +267,10 @@ export default function IncidentTimeline({
                       </p>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 4, flexWrap: 'wrap', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
-                        <span>TIMESTAMP: {new Date(incident.timestamp).toLocaleTimeString()}</span>
-                        <span>ATTACKER IP: <strong style={{ color: '#fff' }}>{incident.attackerIp}</strong></span>
+                        <span>TIMESTAMP: <strong>{new Date(incident.timestamp).toLocaleTimeString()}</strong></span>
+                        <span>ATTACKER IP: <strong style={{ color: 'var(--text-primary)' }}>{incident.attackerIp}</strong></span>
                         {incident.decoyId && (
-                          <span style={{ color: 'var(--cyber-cyan)' }}>TRIPPED: {incident.decoyId}</span>
+                          <span style={{ color: '#0284c7', fontWeight: 600 }}>TRIPPED: {incident.decoyId}</span>
                         )}
                       </div>
                     </div>

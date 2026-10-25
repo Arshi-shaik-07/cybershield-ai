@@ -10,7 +10,7 @@ import {
   Cpu, 
   Activity,
   Radio,
-  ExternalLink
+  BellRing
 } from 'lucide-react';
 import { soundFX } from '../utils/soundEffects';
 
@@ -40,15 +40,20 @@ export default function Header({
 
   const defcon = getDefconStyle();
 
+  const handleTestSound = () => {
+    soundFX.playAlarmAlert();
+  };
+
   return (
     <header style={{
-      background: 'rgba(8, 14, 28, 0.88)',
+      background: 'rgba(255, 255, 255, 0.96)',
       backdropFilter: 'blur(16px)',
       borderBottom: '1px solid var(--border-subtle)',
       padding: '12px 24px',
       position: 'sticky',
       top: 0,
       zIndex: 100,
+      boxShadow: '0 2px 10px rgba(15, 23, 42, 0.04)',
     }}>
       <div style={{
         maxWidth: 1720,
@@ -66,14 +71,14 @@ export default function Header({
             width: 44,
             height: 44,
             borderRadius: 10,
-            background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(139, 92, 246, 0.3))',
-            border: '1px solid var(--cyber-cyan)',
+            background: 'linear-gradient(135deg, #e0f2fe, #ede9fe)',
+            border: '1px solid #bae6fd',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 0 16px rgba(0, 240, 255, 0.3)',
+            boxShadow: '0 2px 8px rgba(2, 132, 199, 0.15)',
           }}>
-            <ShieldAlert size={26} color="var(--cyber-cyan)" />
+            <ShieldAlert size={26} color="#0284c7" />
             <div style={{
               position: 'absolute',
               top: -2,
@@ -82,7 +87,7 @@ export default function Header({
               height: 10,
               borderRadius: '50%',
               background: threatLevel === 'CRITICAL' ? 'var(--cyber-crimson)' : 'var(--cyber-emerald)',
-              boxShadow: `0 0 8px ${threatLevel === 'CRITICAL' ? 'var(--cyber-crimson)' : 'var(--cyber-emerald)'}`,
+              boxShadow: `0 0 6px ${threatLevel === 'CRITICAL' ? 'var(--cyber-crimson)' : 'var(--cyber-emerald)'}`,
             }} />
           </div>
 
@@ -91,15 +96,15 @@ export default function Header({
               <h1 style={{
                 fontSize: 20,
                 fontWeight: 700,
-                letterSpacing: '0.08em',
+                letterSpacing: '0.06em',
                 lineHeight: 1.1,
-                background: 'linear-gradient(90deg, #ffffff 40%, var(--cyber-cyan) 100%)',
+                background: 'linear-gradient(90deg, #0f172a 30%, #0284c7 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
               }}>
                 CYBERSHIELD AI
               </h1>
-              <span className="cyber-badge cyber-badge-cyan" style={{ fontSize: 10 }}>
+              <span className="cyber-badge cyber-badge-cyan" style={{ fontSize: 10, fontWeight: 700 }}>
                 v2.6 SENTINEL
               </span>
             </div>
@@ -107,7 +112,7 @@ export default function Header({
               fontSize: 11,
               fontFamily: 'var(--font-mono)',
               color: 'var(--text-secondary)',
-              letterSpacing: '0.04em',
+              letterSpacing: '0.02em',
             }}>
               CYBER DECEPTION SYSTEM & BLOCKCHAIN PROVENANCE
             </p>
@@ -130,17 +135,26 @@ export default function Header({
         {/* Action Controls & Triggers */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {/* Quick Attack Simulator Trigger */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <button
-              onClick={() => onLaunchScenario('scenario-phish-lateral')}
-              disabled={activeScenario !== null}
-              className="cyber-btn cyber-btn-primary cyber-btn-sm"
-              title="Simulate Spear-Phishing & Lateral Pivot Kill-Chain"
-            >
-              <Play size={13} />
-              <span>Simulate Attack</span>
-            </button>
-          </div>
+          <button
+            onClick={() => onLaunchScenario('scenario-phish-lateral')}
+            disabled={activeScenario !== null}
+            className="cyber-btn cyber-btn-primary cyber-btn-sm"
+            title="Simulate Spear-Phishing & Lateral Pivot Kill-Chain"
+          >
+            <Play size={13} />
+            <span>Simulate Attack</span>
+          </button>
+
+          {/* Test Alert Sound Button */}
+          <button
+            onClick={handleTestSound}
+            className="cyber-btn cyber-btn-sm"
+            style={{ borderColor: '#fca5a5', color: '#dc2626' }}
+            title="Test the new solid klaxon intrusion alarm"
+          >
+            <BellRing size={13} />
+            <span>Test Sound</span>
+          </button>
 
           {/* Incident Report Trigger */}
           <button
@@ -148,7 +162,7 @@ export default function Header({
             className="cyber-btn cyber-btn-sm"
             title="Generate Cryptographic Incident Report"
           >
-            <FileText size={14} color="var(--cyber-cyan)" />
+            <FileText size={14} color="#0284c7" />
             <span>Forensic Report</span>
           </button>
 
@@ -159,17 +173,17 @@ export default function Header({
             style={{ width: 36, padding: 0 }}
             title={soundEnabled ? 'Mute SOC Sound FX' : 'Enable SOC Sound FX'}
           >
-            {soundEnabled ? <Volume2 size={16} color="var(--cyber-cyan)" /> : <VolumeX size={16} color="var(--text-muted)" />}
+            {soundEnabled ? <Volume2 size={16} color="#0284c7" /> : <VolumeX size={16} color="var(--text-muted)" />}
           </button>
 
           {/* Reset System */}
           <button
             onClick={onResetSystem}
             className="cyber-btn cyber-btn-sm"
-            style={{ borderColor: 'rgba(239, 68, 68, 0.4)' }}
+            style={{ borderColor: 'rgba(220, 38, 38, 0.3)' }}
             title="Reset All Network Nodes and Decoys to Armed State"
           >
-            <RotateCcw size={14} color="var(--cyber-crimson)" />
+            <RotateCcw size={14} color="#dc2626" />
             <span>Reset</span>
           </button>
         </div>

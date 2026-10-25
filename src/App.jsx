@@ -14,7 +14,7 @@ import {
   INITIAL_EDGES, 
   INITIAL_DECOYS, 
   ATTACK_SCENARIOS, 
-  GENESIS_BLOCK 
+  getGenesisBlock 
 } from './utils/initialData';
 import { computeHash, createBlock } from './utils/cryptoUtils';
 import { soundFX } from './utils/soundEffects';
@@ -36,10 +36,17 @@ export default function App() {
   // Navigation Tabs: 'TOPOLOGY', 'DECOYS', 'SIMULATOR', 'TERMINAL', 'TIMELINE', 'BLOCKCHAIN'
   const [activeTab, setActiveTab] = useState('TOPOLOGY');
 
-  // Network & Decoy State
+  // Network & Decoy State with dynamic persistence
   const [nodes, setNodes] = useState(INITIAL_NODES);
   const [edges, setEdges] = useState(INITIAL_EDGES);
-  const [decoys, setDecoys] = useState(INITIAL_DECOYS);
+  const [decoys, setDecoys] = useState(() => {
+    try {
+      const saved = localStorage.getItem('cybershield_decoys');
+      return saved ? JSON.parse(saved) : INITIAL_DECOYS;
+    } catch (e) {
+      return INITIAL_DECOYS;
+    }
+  });
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [inspectedDecoy, setInspectedDecoy] = useState(null);
 
@@ -52,11 +59,25 @@ export default function App() {
 
   // Forensics & Blockchain State
   const [incidents, setIncidents] = useState([]);
-  const [blocks, setBlocks] = useState([GENESIS_BLOCK]);
+  const [blocks, setBlocks] = useState(() => [getGenesisBlock()]);
   const [activePlaybackIndex, setActivePlaybackIndex] = useState(0);
   const [threatLevel, setThreatLevel] = useState('NORMAL');
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+
+  // Persist decoys changes to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('cybershield_decoys', JSON.stringify(decoys));
+    } catch (e) {}
+  }, [decoys]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   // Sound FX toggle
   const handleToggleSound = () => {
@@ -65,7 +86,7 @@ export default function App() {
     soundFX.toggle(next);
   };
 
-  // Helper: Trigger Decoy & Mine Blockchain Block
+  // Helper: Trigger Decoy & Mine Blockchain Block with Fast Hashing
   const triggerDecoyTripwire = ({
     decoyId,
     sourceNodeId,
@@ -77,10 +98,10 @@ export default function App() {
     summary,
     severity = 'High',
   }) => {
-    // 1. Play sound
+    // 1. Play solid intrusion alert sound
     soundFX.playAlarmAlert();
 
-    // 2. Update decoy trigger count
+    // 2. Update decoy trigger count dynamically
     let triggeredDecoyName = 'Decoy Gateway';
     setDecoys(prev =>
       prev.map(d => {
@@ -122,19 +143,21 @@ export default function App() {
       });
     }
 
-    // 6. Generate cryptographic evidence hash
+    // 6. Generate dynamic cryptographic evidence hash
     const timestamp = new Date().toISOString();
-    const incidentId = `INC-${Date.now().toString(36).toUpperCase()}`;
+    const incidentId = `INC-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
     const evidencePayload = {
       id: incidentId,
       timestamp,
       tactic,
-      decoyId,
+      decoyId: triggeredDecoyName,
       sourceNode: sourceNodeId,
       targetNode: targetNodeId,
       attackerIp,
     };
     const evidenceHash = '0x' + computeHash(evidencePayload);
+
+    const currentBlockHeight = blocks.length;
 
     const newIncident = {
       id: incidentId,
@@ -149,30 +172,33 @@ export default function App() {
       targetNode: targetNodeId,
       attackerIp,
       evidenceHash,
-      blockNumber: blocks.length,
+      blockNumber: currentBlockHeight,
       isTampered: false,
     };
 
     setIncidents(prev => [newIncident, ...prev]);
 
-    // 7. Mine a new block onto DecoyGrid blockchain
-    const newBlock = createBlock({
-      blockIndex: blocks.length,
-      previousHash: blocks[blocks.length - 1].blockHash,
-      transactions: [
-        {
-          txHash: '0x' + computeHash(incidentId + timestamp),
-          incidentId,
-          timestamp,
-          action: 'DECOY_TRIPWIRE_TRIGGERED',
-          hash: evidenceHash,
-          title: newIncident.title,
-        },
-      ],
+    // 7. Mine a new block onto DecoyGrid blockchain safely using functional updater
+    setBlocks(prevBlocks => {
+      const prevHash = prevBlocks[prevBlocks.length - 1]?.blockHash || '0x0000000000000000000000000000000000000000000000000000000000000000';
+      const newBlock = createBlock({
+        blockIndex: prevBlocks.length,
+        previousHash: prevHash,
+        transactions: [
+          {
+            txHash: '0x' + computeHash(incidentId + timestamp),
+            incidentId,
+            timestamp,
+            action: 'DECOY_TRIPWIRE_TRIGGERED',
+            hash: evidenceHash,
+            title: newIncident.title,
+          },
+        ],
+      });
+      return [...prevBlocks, newBlock];
     });
 
-    setBlocks(prev => [...prev, newBlock]);
-    setTimeout(() => soundFX.playBlockMinted(), 250);
+    setTimeout(() => soundFX.playBlockMinted(), 200);
   };
 
   // Automated Scenario Runner
@@ -180,7 +206,8 @@ export default function App() {
     const scenario = ATTACK_SCENARIOS.find(s => s.id === scenarioId);
     if (!scenario) return;
 
-    // Reset current state
+    if (timerRef.current) clearTimeout(timerRef.current);
+
     setActiveScenarioId(scenarioId);
     setActiveStepIndex(1);
     setIsRunning(true);
@@ -191,7 +218,6 @@ export default function App() {
 
   const executeScenarioStep = (scenario, stepIndex) => {
     if (stepIndex >= scenario.steps.length) {
-      // Completed scenario
       setIsRunning(false);
       soundFX.playContainmentSuccess();
       return;
@@ -200,7 +226,6 @@ export default function App() {
     const step = scenario.steps[stepIndex];
     setActiveStepIndex(step.stepIndex);
 
-    // Apply step actions
     triggerDecoyTripwire({
       decoyId: step.decoyId,
       sourceNodeId: step.sourceNode,
@@ -213,11 +238,10 @@ export default function App() {
       severity: stepIndex >= 3 ? 'Critical' : 'High',
     });
 
-    // Schedule next step
     if (stepIndex + 1 < scenario.steps.length) {
       timerRef.current = setTimeout(() => {
         executeScenarioStep(scenario, stepIndex + 1);
-      }, step.delayMs || 2200);
+      }, step.delayMs || 2000);
     } else {
       setIsRunning(false);
       soundFX.playContainmentSuccess();
@@ -257,8 +281,11 @@ export default function App() {
     setThreatLevel('NORMAL');
     setNodes(INITIAL_NODES);
     setDecoys(INITIAL_DECOYS);
+    try {
+      localStorage.removeItem('cybershield_decoys');
+    } catch (e) {}
     setIncidents([]);
-    setBlocks([GENESIS_BLOCK]);
+    setBlocks([getGenesisBlock()]);
     soundFX.playRadarPing();
   };
 
@@ -417,12 +444,12 @@ export default function App() {
     }
   };
 
-  // Deploy New Decoy Asset
+  // Deploy New Dynamic Decoy Asset
   const handleDeployDecoy = (newDecoy) => {
     setDecoys(prev => [newDecoy, ...prev]);
     soundFX.playBlockMinted();
 
-    // Update node decoy count
+    // Update node decoy count dynamically
     setNodes(prev =>
       prev.map(n => {
         if (n.id === newDecoy.nodeId) {
@@ -431,6 +458,21 @@ export default function App() {
         return n;
       })
     );
+  };
+
+  const handleDeleteDecoy = (decoyId) => {
+    const decoy = decoys.find(d => d.id === decoyId);
+    if (decoy) {
+      setNodes(prev =>
+        prev.map(n => {
+          if (n.id === decoy.nodeId) {
+            return { ...n, decoysCount: Math.max(0, (n.decoysCount || 1) - 1) };
+          }
+          return n;
+        })
+      );
+    }
+    setDecoys(prev => prev.filter(d => d.id !== decoyId));
   };
 
   // Tamper & Anti-Forensics Simulation
@@ -509,7 +551,7 @@ export default function App() {
           >
             <Play size={16} />
             <span>Kill-Chain Simulator</span>
-            {activeScenarioId && <span className="tab-badge" style={{ color: 'var(--cyber-crimson)', background: 'rgba(239, 68, 68, 0.2)' }}>ACTIVE</span>}
+            {activeScenarioId && <span className="tab-badge" style={{ color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca' }}>ACTIVE</span>}
           </button>
 
           <button
@@ -557,6 +599,7 @@ export default function App() {
             decoys={decoys}
             nodes={nodes}
             onDeployDecoy={handleDeployDecoy}
+            onDeleteDecoy={handleDeleteDecoy}
             onViewDecoy={setInspectedDecoy}
             onTestTripwire={(decoy) => {
               triggerDecoyTripwire({

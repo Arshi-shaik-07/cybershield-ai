@@ -475,24 +475,29 @@ export const ATTACK_SCENARIOS = [
   },
 ];
 
-export const GENESIS_BLOCK = {
-  blockIndex: 0,
-  timestamp: '2026-10-25T06:00:00.000Z',
-  previousHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
-  merkleRoot: '0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-  blockHash: '0x0000a94bf821e204c3e8a562f718870e2849b2512a8626e2e2832049d5a7d901',
-  transactionsCount: 1,
-  validator: 'genesis-authority.deception.eth',
-  nonce: 489210,
-  gasUsed: 21000,
-  transactions: [
-    {
-      txHash: '0x7b1c4e9124a985d18302f8931201abce492049d1024859a0182470912bcde01a',
-      incidentId: 'INIT-GENESIS-LEDGER',
-      timestamp: '2026-10-25T06:00:00.000Z',
-      action: 'DECOYGRID_GENESIS_INITIALIZED',
-      detail: 'CyberShield Deception OS & Immutable Forensic Ledger initialized with 10 active decoy assets.',
-      hash: '0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-    },
-  ],
+export const getGenesisBlock = () => {
+  const now = new Date().toISOString();
+  return {
+    blockIndex: 0,
+    timestamp: now,
+    previousHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    merkleRoot: '0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+    blockHash: '0x0000a94bf821e204c3e8a562f718870e2849b2512a8626e2e2832049d5a7d901',
+    transactionsCount: 1,
+    validator: 'genesis-authority.deception.eth',
+    nonce: 489210,
+    gasUsed: 21000,
+    transactions: [
+      {
+        txHash: '0x7b1c4e9124a985d18302f8931201abce492049d1024859a0182470912bcde01a',
+        incidentId: 'INIT-GENESIS-LEDGER',
+        timestamp: now,
+        action: 'DECOYGRID_GENESIS_INITIALIZED',
+        detail: 'CyberShield Deception OS & Immutable Forensic Ledger initialized with active live sensors.',
+        hash: '0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+      },
+    ],
+  };
 };
+
+export const GENESIS_BLOCK = getGenesisBlock();
