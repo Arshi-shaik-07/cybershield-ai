@@ -137,14 +137,14 @@ export default function DecoyManager({
       }}>
         <div className="glass-panel" style={{ padding: 18, background: '#ffffff' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>INSERTED DECOYS</span>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>INSERTED DECOY ASSETS</span>
             <ShieldCheck size={18} color="#059669" />
           </div>
           <div style={{ fontSize: 32, fontWeight: 700, color: 'var(--text-primary)', marginTop: 8 }}>
             {decoys.length}
           </div>
           <p style={{ fontSize: 11, color: '#059669', marginTop: 4, fontWeight: 600 }}>
-            {decoys.length === 0 ? 'NO DEMO RECORDS • AWAITING OWNER INSERT' : 'AUTHENTIC OWNER-INSERTED ASSETS'}
+            AUTHENTIC STATIC & OWNER ASSETS
           </p>
         </div>
 
@@ -167,10 +167,10 @@ export default function DecoyManager({
             <UserCheck size={18} color="#0284c7" />
           </div>
           <div style={{ fontSize: 20, fontWeight: 700, color: '#0284c7', marginTop: 12 }}>
-            Owner / User Defined
+            Owner / Security Admin
           </div>
           <p style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 500 }}>
-            0 DEMO MOCKS • LIVE STORAGE
+            STATIC PRODUCTION DEPLOYED • 0 DEMOS
           </p>
         </div>
 
@@ -192,10 +192,10 @@ export default function DecoyManager({
               <button
                 onClick={onClearAllDecoys}
                 className="cyber-btn cyber-btn-sm"
-                style={{ borderColor: '#fca5a5', color: '#dc2626' }}
-                title="Clear all inserted decoys"
+                style={{ borderColor: '#cbd5e1', color: '#475569' }}
+                title="Reset to default authentic owner records"
               >
-                <Trash2 size={14} />
+                <RotateCcw size={14} />
               </button>
             )}
           </div>

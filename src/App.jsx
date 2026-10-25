@@ -99,19 +99,21 @@ export default function App() {
   // Navigation Tabs: 'TOPOLOGY', 'DECOYS', 'SIMULATOR', 'TERMINAL', 'TIMELINE', 'BLOCKCHAIN'
   const [activeTab, setActiveTab] = useState('SIMULATOR');
 
-  // Network & Decoy State with dynamic persistence (0 demo records - only owner/user inserted records)
+  // Network & Decoy State with static authentic owner-inserted assets (NO demo records)
   const [nodes, setNodes] = useState(INITIAL_NODES);
   const [edges, setEdges] = useState(INITIAL_EDGES);
   const [decoys, setDecoys] = useState(() => {
     try {
-      const saved = localStorage.getItem('cybershield_owner_records_v3');
+      const saved = localStorage.getItem('cybershield_owner_records_v4');
       if (saved) {
         const parsed = JSON.parse(saved);
-        return parsed.filter(d => !d.id?.startsWith('decoy-file-') && !d.id?.startsWith('decoy-cred-') && !d.id?.startsWith('decoy-endp-'));
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
       }
-      return [];
+      return INITIAL_DECOYS;
     } catch (e) {
-      return [];
+      return INITIAL_DECOYS;
     }
   });
 
@@ -152,7 +154,7 @@ export default function App() {
   // Persist owner-inserted decoys changes to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('cybershield_owner_records_v3', JSON.stringify(decoys));
+      localStorage.setItem('cybershield_owner_records_v4', JSON.stringify(decoys));
     } catch (e) {}
   }, [decoys]);
 
@@ -634,9 +636,9 @@ export default function App() {
   };
 
   const handleClearAllDecoys = () => {
-    setDecoys([]);
+    setDecoys(INITIAL_DECOYS);
     try {
-      localStorage.removeItem('cybershield_owner_records_v3');
+      localStorage.setItem('cybershield_owner_records_v4', JSON.stringify(INITIAL_DECOYS));
     } catch (e) {}
   };
 
